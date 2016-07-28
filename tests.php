@@ -5,7 +5,10 @@ include 'xt.php';
 // ATX test
 
 if (isset($_REQUEST['test'])) {
-	XT\parse('tests/'.$_REQUEST['test'].'.xt');
+	XT\parse(new SplFileObject('tests/'.$_REQUEST['test'].'.xt'));
 } else {
-	XT\parse('tests/index.xt');
+	$t = microtime(true);
+	XT\parse(new SplFileObject('examples/basic.xt'));
+	$t = microtime(true) - $t;
+	echo "Executado em $t segundos.\n";
 }
