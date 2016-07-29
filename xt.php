@@ -8,8 +8,6 @@ class LineReader {
 	private $rewind;
 	public $line;
 
-	const TAB_SIZE = 4;
-
 	public function __construct( \SplFileObject $source ) {
 		$this->source = $source;
 		$this->current_block = null;
@@ -35,8 +33,11 @@ class LineReader {
 		if ($this->rewind) {
 			$this->rewind = false;
 		} else {
-			if ($this->source->eof()) return false;
-			$this->line = preg_replace("; {{LineReader::TAB_SIZE}};S",'\t',$this->source->fgets());
+			if ($this->source->eof()) {
+				$this->line = "";
+				return false;
+			}
+			$this->line = preg_replace('; {4};S',"\t",$this->source->fgets());
 		}
 		if (\strlen(\trim($this->line)) == 0) return "\n";
 		if ($this->current_block === null) return $this->line;
@@ -72,7 +73,7 @@ function parseHTML(LineReader $reader) {
 function parseCode(LineReader $reader) {
 	echo "<pre><code>\n";
 	$reader->rewindLine();
-	$reader->push("\t");
+	$reader->push('\t');
 	while (false !== ($line = $reader->readLine())) {
 		echo parseLine($line);
 	}
@@ -89,7 +90,7 @@ function parseList(LineReader $reader, bool $ordered) {
 	while (false !== ($line = $reader->readLine())) {
 		if (!preg_match($regex,$line)) break;
 		$reader->line = mb_substr($reader->line,0,mb_strlen($reader->line)-mb_strlen($line)).preg_replace($regex,"\t",$line,1);
-		$reader->push("\t");
+		$reader->push('\t');
 		$reader->rewindLine();
 		echo "<li>";
 		parseP($reader);
@@ -105,7 +106,7 @@ function parseList(LineReader $reader, bool $ordered) {
 function parseQuote(LineReader $reader) {
 	echo "<blockquote>\n";
 	$reader->rewindLine();
-	$reader->push("(?:>\s?)");
+	$reader->push('(?:>\s?)');
 	parseP($reader);
 	$reader->pop();
 	$reader->rewindLine();
