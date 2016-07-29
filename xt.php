@@ -5,8 +5,10 @@ class LineReader {
 	public $source;
 	public $blocks;
 	public $current_block;
-	public $rewind;
+	private $rewind;
 	public $line;
+
+	const TAB_SIZE = 4;
 
 	public function __construct( \SplFileObject $source ) {
 		$this->source = $source;
@@ -34,7 +36,7 @@ class LineReader {
 			$this->rewind = false;
 		} else {
 			if ($this->source->eof()) return false;
-			$this->line = $this->source->fgets();
+			$this->line = preg_replace("; {{LineReader::TAB_SIZE}};S",'\t',$this->source->fgets());
 		}
 		if (\strlen(\trim($this->line)) == 0) return "\n";
 		if ($this->current_block === null) return $this->line;
@@ -50,7 +52,7 @@ class LineReader {
 
 function parseLine($line) {
 	// inline code
-	$line = preg_replace(';`([^\']+?)`;S','<code>$1</code>',$line);
+	$line = preg_replace(';`(.+?)`;S','<code>$1</code>',$line);
 	return $line;
 }
 
@@ -70,13 +72,44 @@ function parseHTML(LineReader $reader) {
 function parseCode(LineReader $reader) {
 	echo "<pre><code>\n";
 	$reader->rewindLine();
-	$reader->push("(?: {4}|\t)");
+	$reader->push("\t");
 	while (false !== ($line = $reader->readLine())) {
 		echo parseLine($line);
 	}
 	echo "</code></pre>\n";
 	$reader->rewindLine();
 	$reader->pop();
+}
+
+function parseList(LineReader $reader, bool $ordered) {
+	$tag = $ordered ? 'ol' : 'ul';
+	$regex = $ordered ? ';^(?:\d+\.\s+);S' : ';^(?:[#-]\s+);S';
+	echo "<$tag>\n";
+	$reader->rewindLine();
+	while (false !== ($line = $reader->readLine())) {
+		if (!preg_match($regex,$line)) break;
+		$reader->line = mb_substr($reader->line,0,mb_strlen($reader->line)-mb_strlen($line)).preg_replace($regex,"\t",$line,1);
+		$reader->push("\t");
+		$reader->rewindLine();
+		echo "<li>";
+		parseP($reader);
+		echo "</li>\n";
+		$reader->pop();
+		$reader->rewindLine();
+	}
+	// end list
+	echo "</$tag>\n";
+	$reader->rewindLine();
+}
+
+function parseQuote(LineReader $reader) {
+	echo "<blockquote>\n";
+	$reader->rewindLine();
+	$reader->push("(?:>\s?)");
+	parseP($reader);
+	$reader->pop();
+	$reader->rewindLine();
+	echo "</blockquote>\n";
 }
 
 function parseP(LineReader $reader) {
@@ -101,17 +134,32 @@ function parseP(LineReader $reader) {
 			echo "<hr>\n";
 			continue;
 		}
-		if (preg_match(';^(?: {4}|\t);',$line)) {
+		if (preg_match(';^>;S',$line)) {
+			// blockquote
+			if ($p) { echo "</p>\n"; $p = false; }
+			parseQuote($reader);
+			continue;
+		}
+		if (preg_match(';^\d+\.;S', $line)) {
+			// ol
+			if ($p) { echo "</p>\n"; $p = false; }
+			parseList($reader,true);
+			continue;
+		}
+		if (preg_match(';^(?:-|#);S', $line)) {
+			// ul
+			if ($p) { echo "</p>\n"; $p = false; }
+			parseList($reader,false);
+			continue;
+		}
+		if (preg_match(';^\t;S',$line)) {
 			// pre,code
 			if ($p) { echo "</p>\n"; $p = false; }
 			parseCode($reader);
 			continue;
 		}
 		if ($line == "\n") {
-			if ($p) {
-				echo "</p>\n";
-				$p = false;
-			}
+			if ($p) { echo "</p>\n"; $p = false; }
 			continue;
 		}
 		if (!$p) { echo "<p>"; $p = true; }

@@ -47,6 +47,7 @@ It doesn't matter the ending equals, they'll be removed in the final HTML, but i
 
 	-	inline
 	-	outro inline
+		== Título dentro do item
 		ainda no anterior
 	
 1.	numerico
@@ -54,16 +55,28 @@ It doesn't matter the ending equals, they'll be removed in the final HTML, but i
 	ainda no segundo
 
 	ainda no segundo
-3.	terceiro
+3.		function terceiro {
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse nisl sem, rutrum ac lacus vel, 
-hendrerit venenatis felis. Phasellus ut aliquet erat, at egestas est. Nunc neque enim, euismod sed 
-erat sed, scelerisque dignissim nisl. Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ut 
-neque quis ex laoreet iaculis eget quis dolor. Donec maximus augue tellus, accumsan consequat risus 
-viverra condimentum. Donec imperdiet, quam sit amet mollis ultricies, tellus nibh imperdiet erat, vitae 
-convallis risus neque sed nulla. Sed vel lorem id enim faucibus dignissim nec a mauris. Nam mollis, 
-lacus id tincidunt pellentesque, quam felis porta urna, vel euismod lorem tortor non lorem. Duis sagittis 
-odio eget magna lacinia, vitae scelerisque leo ultrices.
+		código no terceiro
+			teste
+		}
+
+> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse nisl sem, rutrum ac lacus vel, 
+> hendrerit venenatis felis. Phasellus ut aliquet erat, at egestas est. Nunc neque enim, euismod sed 
+> erat sed, scelerisque dignissim nisl. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+> > Nested quote
+>> with nested code
+>> 	test {
+>> 		code;
+>> 	}
+>> End of nested quote...
+> Back to previous quote:
+> 
+> In ut neque quis ex laoreet iaculis eget quis dolor. Donec maximus augue tellus, accumsan consequat risus 
+> viverra condimentum. Donec imperdiet, quam sit amet mollis ultricies, tellus nibh imperdiet erat, vitae 
+> convallis risus neque sed nulla. Sed vel lorem id enim faucibus dignissim nec a mauris. Nam mollis, 
+> lacus id tincidunt pellentesque, quam felis porta urna, vel euismod lorem tortor non lorem. Duis sagittis 
+> odio eget magna lacinia, vitae scelerisque leo ultrices.
 
 	int i = 0;
 	
