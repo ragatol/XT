@@ -4,7 +4,7 @@ XT files are simple text files that are transformed to HTML, with a syntax
 similar to Markdown, but can have PHP code just like a .php file.
 
 It uses the built-in processing that PHP does to .php files (interpret PHP code
-inside php tags, just copy everything else to the output buffer), so .xt files
+inside php tags, just copy everything else to the output buffer), so .xt files  
 must be files that can be used with the `include` construct, just like .php files.
 
 If `allow_url_include` is enabled on php.ini, then you can use string streams as a source too.

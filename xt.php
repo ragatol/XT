@@ -52,8 +52,9 @@ class LineReader {
 }
 
 function parseLine($line) {
-	// inline code
-	$line = htmlentities($line);
+	// entities
+	$line = preg_replace(';<(\W);S','&lt;\1',$line);
+	// formatting
 	$line = preg_replace(';(`{1,2})(.+?)\1;S','<code>$2</code>',$line);
 	return $line;
 }
@@ -74,7 +75,7 @@ function parseHTML(LineReader $reader) {
 function parseCode(LineReader $reader, bool $fenced = false) {
 	$lang = "";
 	if ($fenced) {
-		$lang = trim($reader->line,"`~ \n");
+		$lang = trim($reader->line,"`~ \n\t\r");
 	}
 	echo "<pre><code", (strlen($lang) > 0 ? " class=\"language-$lang\"" : "") , ">\n";
 	if (!$fenced) {
@@ -83,7 +84,7 @@ function parseCode(LineReader $reader, bool $fenced = false) {
 	}
 	while (false !== ($line = $reader->readLine())) {
 		if ($fenced && preg_match(';^[`~]{3};S',$line)) break;
-		echo parseLine($line);
+		echo htmlentities($line);
 	}
 	echo "</code></pre>\n";
 	if (!$fenced) {
@@ -184,6 +185,7 @@ function parseP(LineReader $reader) {
 			echo "<p>"; $p = true;
 		}
 		echo parseLine($line);
+		if (preg_match(';  $;S',$line)) echo "<br>";
 	}
 	if ($p) echo "</p>\n";
 }

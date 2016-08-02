@@ -26,14 +26,15 @@
 
 		Back to "C"
 	- D
-1. Ordered
-2. List
-43. Does't matter the number
+1.	Ordered
+2.	List
+43.	Does't matter the number
 
 	Now a code:
 
-		void printf() {
-			test();
-		}
-
+	~~~ c++
+	void printf() {
+		test();
+	}
+	~~~
 end of lists
