@@ -53,7 +53,8 @@ class LineReader {
 
 function parseLine($line) {
 	// inline code
-	$line = preg_replace(';`(.+?)`;S','<code>$1</code>',$line);
+	$line = htmlentities($line);
+	$line = preg_replace(';(`{1,2})(.+?)\1;S','<code>$2</code>',$line);
 	return $line;
 }
 
@@ -70,21 +71,30 @@ function parseHTML(LineReader $reader) {
 	}
 }
 
-function parseCode(LineReader $reader) {
-	echo "<pre><code>\n";
-	$reader->rewindLine();
-	$reader->push('\t');
+function parseCode(LineReader $reader, bool $fenced = false) {
+	$lang = "";
+	if ($fenced) {
+		$lang = trim($reader->line,"`~ \n");
+	}
+	echo "<pre><code", (strlen($lang) > 0 ? " class=\"language-$lang\"" : "") , ">\n";
+	if (!$fenced) {
+		$reader->push('\t');
+		$reader->rewindLine();
+	}
 	while (false !== ($line = $reader->readLine())) {
+		if ($fenced && preg_match(';^[`~]{3};S',$line)) break;
 		echo parseLine($line);
 	}
 	echo "</code></pre>\n";
-	$reader->rewindLine();
-	$reader->pop();
+	if (!$fenced) {
+		$reader->pop();
+		$reader->rewindLine();
+	}
 }
 
 function parseList(LineReader $reader, bool $ordered) {
 	$tag = $ordered ? 'ol' : 'ul';
-	$regex = $ordered ? ';^(?:\d+\.\s+);S' : ';^(?:[#-]\s+);S';
+	$regex = $ordered ? ';^(?:\d+\.\s);S' : ';^(?:[*-]\s);S';
 	echo "<$tag>\n";
 	$reader->rewindLine();
 	while (false !== ($line = $reader->readLine())) {
@@ -122,14 +132,14 @@ function parseP(LineReader $reader) {
 			parseHTML($reader);
 			continue;
 		}
-		if (preg_match(';^={1,6}\s*\w+;S',$line)) {
+		if (preg_match(';^#{1,6}\s*\w+;S',$line)) {
 			// H1-H6
 			if ($p) { echo "</p>\n"; $p = false; }
-			$lvl = strspn($line,"=");
-			echo "<h$lvl>",trim($line,"=\n "),"</h$lvl>\n";
+			$lvl = strspn($line,"#");
+			echo "<h$lvl>",trim($line,"#\n "),"</h$lvl>\n";
 			continue;
 		}
-		if (preg_match(';^-+$;S',$line)) {
+		if (preg_match(';^---+$;S',$line)) {
 			// hr
 			if ($p) { echo "</p>\n"; $p = false; }
 			echo "<hr>\n";
@@ -147,10 +157,16 @@ function parseP(LineReader $reader) {
 			parseList($reader,true);
 			continue;
 		}
-		if (preg_match(';^(?:-|#);S', $line)) {
+		if (preg_match(';^(?:-|\*);S', $line)) {
 			// ul
 			if ($p) { echo "</p>\n"; $p = false; }
 			parseList($reader,false);
+			continue;
+		}
+		if (preg_match(';^[`~]{3};S',$line)) {
+			// fenced pre-code
+			if ($p) { echo "</p>\n"; $p = false; }
+			parseCode($reader,true);
 			continue;
 		}
 		if (preg_match(';^\t;S',$line)) {
@@ -163,7 +179,10 @@ function parseP(LineReader $reader) {
 			if ($p) { echo "</p>\n"; $p = false; }
 			continue;
 		}
-		if (!$p) { echo "<p>"; $p = true; }
+		if (!$p) {
+			if ($line == "\n" || $line == "") continue;
+			echo "<p>"; $p = true;
+		}
 		echo parseLine($line);
 	}
 	if ($p) echo "</p>\n";
