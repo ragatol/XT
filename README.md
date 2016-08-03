@@ -5,7 +5,7 @@ XT - A small and fast Markdown style text to HTML parser.
 
 XT is a library to convert Markdown style text to HTML code.
 
-It's able to understand headings, paragraphs, quotes, ordered and unordered lists, inline HTML and code fragments.
+It's able to understand headings, paragraphs, quotes, ordered and unordered lists, inline HTML and code fragments. Tables are planned for future support.
 
 Since it's designed to be a single-pass, line-by-line, top-down parser, there's some differences on how it implements some complex structures:
 
@@ -18,8 +18,8 @@ Since it's designed to be a single-pass, line-by-line, top-down parser, there's 
 		Item
 	-	Other Item
 	~~~
-- References must be defined __before__ use.
-- Only a few tags are understood when used inline. Use the block-level HTML for more complex HTML.
+- References are not supported (right now).
+- Very limited use of inline HTML; Use block-level HTML instead.
 
 ## How to use
 

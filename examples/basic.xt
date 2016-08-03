@@ -3,6 +3,12 @@
 XT files are simple text files that are transformed to HTML, with a syntax
 similar to Markdown, but can have PHP code just like a .php file.
 
+Teste de lista [aqui](?test=lists) (código fonte [aqui](lists.xt)).
+
+Teste de imagem dentro de link:
+
+[![Teste](image.jpg "Caretinha!!")](image.jpg)
+
 It uses the built-in processing that PHP does to .php files (interpret PHP code
 inside php tags, just copy everything else to the output buffer), so .xt files  
 must be files that can be used with the `include` construct, just like .php files.
@@ -72,6 +78,18 @@ It doesn't matter the ending `#`, they'll be removed in the final HTML, but it m
 >> End of nested quote...
 > Back to previous quote:
 > 
+> Nested list:
+> - item 1
+> - item 2
+> - item 3
+> - Ordered Nested List:
+> 	1. one
+>	2. two with code:
+> 		~~~c++
+> 		print("Hello World!");
+> 		~~~
+> 	3. three
+> 
 > In ut neque quis ex laoreet iaculis eget quis dolor. Donec maximus augue tellus, accumsan consequat risus 
 > viverra condimentum. Donec imperdiet, quam sit amet mollis ultricies, tellus nibh imperdiet erat, vitae 
 > convallis risus neque sed nulla. Sed vel lorem id enim faucibus dignissim nec a mauris. Nam mollis, 
@@ -91,6 +109,8 @@ id massa venenatis cursus. Proin tincidunt semper bibendum. Aenean eleifend faci
 Sed eu felis ipsum. Fusce condimentum risus volutpat aliquam sodales.
 
 ## Second Level Heading ##
+
+Meu e-mail: <ragatol@hotmail.com>
 
 Cras sit amet efficitur mi. Nunc id aliquet nisl. Cras luctus odio sit amet arcu ultricies accumsan.
 Sed purus sapien, sodales at mi id, scelerisque blandit neque. Interdum et malesuada fames ac ante ipsum 

@@ -7,13 +7,15 @@ class LineReader {
 	public $current_block;
 	private $rewind;
 	public $line;
+	public $baseurl;
 
-	public function __construct( \SplFileObject $source ) {
+	public function __construct( \SplFileObject $source, $baseurl ) {
 		$this->source = $source;
 		$this->current_block = null;
 		$this->blocks = [];
 		$this->rewind = false;
 		$this->line = "";
+		$this->baseurl = $baseurl;
 	}
 
 	public function rewindLine() {
@@ -51,11 +53,56 @@ class LineReader {
 	}
 }
 
-function parseLine($line) {
-	// entities
-	$line = preg_replace(';<(\W);S','&lt;\1',$line);
+function replaceSpecial($line) {
+	$line = preg_replace(';_;S','&lowbar;',$line);
+	$line = preg_replace(';\*;S','&ast;',$line);
+	return $line;
+}
+
+function parseLine($reader,$line) {
+	// URL generators:
+	// email
+	$line = preg_replace(';<(\S+\@\S+\.\S+)>;S','<a href="mailto:$1">$1</a>',$line);
+	// images
+	$line = preg_replace_callback(';\!\[(.+?)\]\(([^" ]+)(?:\s*("|\')([^\3]*?)\3)?\);S',
+		function ($matches) use (&$reader) {
+			$title = isset($matches[4]) ? "title=\"{$matches[4]}\"" : "";
+			if (preg_match(';^(?:http(?:s)?:\/\/|\/\S|\?\S);S',$matches[2])) {
+				$link = $matches[2];
+			} else {
+				$link = \dirname($reader->baseurl). '/' . $matches[2];
+			}
+			return "<img src=\"$link\" alt=\"{$matches[1]}\" $title>";
+		}, $line);
+	// links
+	$line = preg_replace_callback(';\[(.+?)\]\(([^" ]+)(?:\s*("|\')([^\3]*?)\3)?\);S',
+		function ($matches) use (&$reader) {
+			$title = isset($matches[4]) ? "title=\"{$matches[4]}\"" : "";
+			if (preg_match(';^(?:http(?:s)?:\/\/|\/\S|\?\S);S',$matches[2])) {
+				$link = $matches[2];
+			} else {
+				$link = \dirname($reader->baseurl). '/' . $matches[2];
+			}
+			return "<a href=\"$link\" $title>{$matches[1]}</a>";
+		}, $line);
+	// automatic link
+	$line = preg_replace(';(?<!(?:ref|src)=["\'])<?((?:https?|ftp):\/\/[\w-.!*\'\;:@&=+$,/?#]+)>?;S',"<a href=\"$1\">$1</a>",$line);
+	// special characters
+	// < -> &lt; if not an <a>, <b>, <i> or <span> tag
+	$line = preg_replace(';<(?!/?a|b|i|span);S','&lt;',$line);
 	// formatting
-	$line = preg_replace(';(`{1,2})(.+?)\1;S','<code>$2</code>',$line);
+	// inline code
+	$line = preg_replace_callback(';(`{1,2})(.+?)\1;S',
+		function ($matches) {
+			return '<code>'.replaceSpecial($matches[2]).'</code>';	
+		},$line);
+	// strong
+	$line = preg_replace_callback(';(\*\*|__)([\w_\*<].+?)\1(?=[^\w\*_]);S',
+		function ($matches) {
+			return '<strong>'.replaceSpecial(preg_replace(';((?<=\W|^)[\*_])(.+?)(?:(?<=\w|>)\1);S','<em>$2</em>',$matches[2])).'</strong>';
+		},$line);
+	// em
+	$line = preg_replace(';((?<=\W|^)[\*_])(.+?)(?:(?<=\w|>)\1);S','<em>$2</em>',$line);
 	return $line;
 }
 
@@ -75,7 +122,7 @@ function parseHTML(LineReader $reader) {
 function parseCode(LineReader $reader, bool $fenced = false) {
 	$lang = "";
 	if ($fenced) {
-		$lang = trim($reader->line,"`~ \n\t\r");
+		$lang = preg_replace(';.*?[~`]{3,}(\S+)\n;S','$1',$reader->line);
 	}
 	echo "<pre><code", (strlen($lang) > 0 ? " class=\"language-$lang\"" : "") , ">\n";
 	if (!$fenced) {
@@ -137,7 +184,7 @@ function parseP(LineReader $reader) {
 			// H1-H6
 			if ($p) { echo "</p>\n"; $p = false; }
 			$lvl = strspn($line,"#");
-			echo "<h$lvl>",trim($line,"#\n "),"</h$lvl>\n";
+			echo "<h$lvl>",parseLine($reader,trim($line,"#\n ")),"</h$lvl>\n";
 			continue;
 		}
 		if (preg_match(';^---+$;S',$line)) {
@@ -158,7 +205,7 @@ function parseP(LineReader $reader) {
 			parseList($reader,true);
 			continue;
 		}
-		if (preg_match(';^(?:-|\*);S', $line)) {
+		if (preg_match(';^(?:-|\*)\s;S', $line)) {
 			// ul
 			if ($p) { echo "</p>\n"; $p = false; }
 			parseList($reader,false);
@@ -184,7 +231,7 @@ function parseP(LineReader $reader) {
 			if ($line == "\n" || $line == "") continue;
 			echo "<p>"; $p = true;
 		}
-		echo parseLine($line);
+		echo parseLine($reader,$line);
 		if (preg_match(';  $;S',$line)) echo "<br>";
 	}
 	if ($p) echo "</p>\n";
@@ -197,19 +244,10 @@ namespace XT;
 /**
  * Parses a XT file through the PHP interpreter, then transforms XT text to HTML.
  * @param SplFileObject $INPUT inpu stream with source
- * @param \SplFileObject $OUTPUT If set, write the results to it, otherwise the PHP default output will be used
+ * @param string $baseurl If set, it'll be added at the start of realtive urls
  */
-function parse(\SplFileObject $INPUT, \SplFileObject $OUTPUT = NULL ) {
-	// parse resulting XT/HTML file to HTML5
-	ob_start();
-	impl\parseP(new impl\LineReader($INPUT));
-	// flush buffer or save contents to output object
-	if (is_null($OUTPUT)) {
-		ob_end_flush();
-	} else {
-		$OUTPUT->fwrite(ob_get_contents());
-		ob_end_clean();
-	}
+function parse(\SplFileObject $INPUT, $baseurl = NULL ) {
+	impl\parseP(new impl\LineReader($INPUT,$baseurl));
 };
 
 // end namespace XT
