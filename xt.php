@@ -75,7 +75,7 @@ function parseLine($reader,$line) {
 			return "<img src=\"$link\" alt=\"{$matches[1]}\" $title>";
 		}, $line);
 	// links
-	$line = preg_replace_callback(';\[(.+?)\]\(([^" ]+)(?:\s*("|\')([^\3]*?)\3)?\);S',
+	$line = preg_replace_callback(';\[(.+?)\]\(([^"\'\s\)]+)(?:\s*("|\')([^\3\)]*?)\3)?\);S',
 		function ($matches) use (&$reader) {
 			$title = isset($matches[4]) ? "title=\"{$matches[4]}\"" : "";
 			if (preg_match(';^(?:http(?:s)?:\/\/|\/\S|\?\S);S',$matches[2])) {
