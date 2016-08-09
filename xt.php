@@ -39,12 +39,12 @@ class LineReader {
 				$this->line = "";
 				return false;
 			}
-			$this->line = preg_replace('; {4};S',"\t",$this->source->fgets());
+			$this->line = preg_replace('/ {4}/S',"\t",$this->source->fgets());
 		}
 		if (\strlen(\trim($this->line)) == 0) return "\n";
 		if ($this->current_block === null) return $this->line;
-		if (!preg_match(';^'.$this->current_block.';S',$this->line)) return false;
-		return preg_replace(';^'.$this->current_block.';S',"",$this->line,1); 
+		if (!preg_match('/^'.$this->current_block.'/S',$this->line)) return false;
+		return preg_replace('/^'.$this->current_block.'/S',"",$this->line,1); 
 	}
 
 	public function getLine() {
@@ -54,20 +54,20 @@ class LineReader {
 }
 
 function replaceSpecial($line) {
-	$line = preg_replace(';_;S','&lowbar;',$line);
-	$line = preg_replace(';\*;S','&ast;',$line);
+	$line = preg_replace('/_/S','&lowbar;',$line);
+	$line = preg_replace('/\*/S','&ast;',$line);
 	return $line;
 }
 
 function parseLine($reader,$line) {
 	// URL generators:
 	// email
-	$line = preg_replace(';<(\S+\@\S+\.\S+)>;S','<a href="mailto:$1">$1</a>',$line);
+	$line = preg_replace('/<(\S+\@\S+\.\S+)>/S','<a href="mailto:$1">$1</a>',$line);
 	// images
-	$line = preg_replace_callback(';\!\[(.+?)\]\(([^" ]+)(?:\s*("|\')([^\3]*?)\3)?\);S',
+	$line = preg_replace_callback('/\!\[(.+?)\]\(([^" ]+)(?:\s*("|\')([^\3]*?)\3)?\)/S',
 		function ($matches) use (&$reader) {
 			$title = isset($matches[4]) ? "title=\"{$matches[4]}\"" : "";
-			if (preg_match(';^(?:http(?:s)?:\/\/|\/\S|\?\S);S',$matches[2])) {
+			if (preg_match('/^(?:http(?:s)?:\/\/|\/\S|\?\S)/S',$matches[2])) {
 				$link = $matches[2];
 			} else {
 				$link = \dirname($reader->baseurl). '/' . $matches[2];
@@ -75,10 +75,10 @@ function parseLine($reader,$line) {
 			return "<img src=\"$link\" alt=\"{$matches[1]}\" $title>";
 		}, $line);
 	// links
-	$line = preg_replace_callback(';\[(.+?)\]\(([^"\'\s\)]+)(?:\s*("|\')([^\3\)]*?)\3)?\);S',
+	$line = preg_replace_callback('/\[(.+?)\]\(([^"\'\s\)]+)(?:\s*("|\')([^\3\)]*?)\3)?\)/S',
 		function ($matches) use (&$reader) {
 			$title = isset($matches[4]) ? "title=\"{$matches[4]}\"" : "";
-			if (preg_match(';^(?:http(?:s)?:\/\/|\/\S|\?\S);S',$matches[2])) {
+			if (preg_match('/^(?:http(?:s)?:\/\/|\/\S|\?\S)/S',$matches[2])) {
 				$link = $matches[2];
 			} else {
 				$link = \dirname($reader->baseurl). '/' . $matches[2];
@@ -86,31 +86,31 @@ function parseLine($reader,$line) {
 			return "<a href=\"$link\" $title>{$matches[1]}</a>";
 		}, $line);
 	// automatic link
-	$line = preg_replace(';(?<!(?:ref|src)=["\'])<?((?:https?|ftp):\/\/[\w-.!*\'\;:@&=+$,/?#]+)>?;S',"<a href=\"$1\">$1</a>",$line);
+	$line = preg_replace('/(?<!(?:ref|src)=["\'])<?((?:https?|ftp):\/\/[\w-.!*\'\;:@&=+$,\/?#]+)>?/S',"<a href=\"$1\">$1</a>",$line);
 	// special characters
 	// < -> &lt; if not an <a>, <b>, <i> or <span> tag
-	$line = preg_replace(';<(?!/?a|b|i|span);S','&lt;',$line);
+	$line = preg_replace('/<(?!\/?a|b|i|span)/S','&lt;',$line);
 	// formatting
 	// inline code
-	$line = preg_replace_callback(';(`{1,2})(.+?)\1;S',
+	$line = preg_replace_callback('/(`{1,2})(.+?)\1/S',
 		function ($matches) {
 			return '<code>'.replaceSpecial($matches[2]).'</code>';	
 		},$line);
 	// strong
-	$line = preg_replace_callback(';(\*\*|__)([\w_\*<].+?)\1(?=[^\w\*_]);S',
+	$line = preg_replace_callback('/(\*\*|__)([\w_\*<].+?)\1(?=[^\w\*_])/S',
 		function ($matches) {
-			return '<strong>'.replaceSpecial(preg_replace(';((?<=\W|^)[\*_])(.+?)(?:(?<=\w|>)\1);S','<em>$2</em>',$matches[2])).'</strong>';
+			return '<strong>'.replaceSpecial(preg_replace('/((?<=\W|^)[\*_])(.+?)(?:(?<=\w|>)\1)/S','<em>$2</em>',$matches[2])).'</strong>';
 		},$line);
 	// em
-	$line = preg_replace(';((?<=\W|^)[\*_])(.+?)(?:(?<=\w|>)\1);S','<em>$2</em>',$line);
+	$line = preg_replace('/((?<=\W|^)[\*_])(.+?)(?:(?<=\w|>)\1)/S','<em>$2</em>',$line);
 	return $line;
 }
 
 function parseHTML(LineReader $reader) {
 	echo $reader->line;
-	$endtag = preg_replace(';^<(\w+).*;',';^</$1;S',$reader->line);
+	$endtag = preg_replace('/^<(\w+).*/S','/^<\/$1/S',$reader->line);
 	while (false !== ($line = $reader->getLine())) {
-		if (strlen(trim($line)) > 0 && !preg_match(';^\s|<;S',$line)) {
+		if (strlen(trim($line)) > 0 && !preg_match('/^\s|</S',$line)) {
 			$reader->rewindLine();
 			return;
 		}
@@ -122,7 +122,7 @@ function parseHTML(LineReader $reader) {
 function parseCode(LineReader $reader, bool $fenced = false) {
 	$lang = "";
 	if ($fenced) {
-		$lang = preg_replace(';.*?[~`]{3,}(\S+)\n;S','$1',$reader->line);
+		$lang = preg_replace('/.*?[~`]{3,}(\S+)\n/S','$1',$reader->line);
 	}
 	echo "<pre><code", (strlen($lang) > 0 ? " class=\"language-$lang\"" : "") , ">\n";
 	if (!$fenced) {
@@ -130,7 +130,7 @@ function parseCode(LineReader $reader, bool $fenced = false) {
 		$reader->rewindLine();
 	}
 	while (false !== ($line = $reader->readLine())) {
-		if ($fenced && preg_match(';^[`~]{3};S',$line)) break;
+		if ($fenced && preg_match('/^[`~]{3}/S',$line)) break;
 		echo htmlentities($line);
 	}
 	echo "</code></pre>\n";
@@ -142,7 +142,7 @@ function parseCode(LineReader $reader, bool $fenced = false) {
 
 function parseList(LineReader $reader, bool $ordered) {
 	$tag = $ordered ? 'ol' : 'ul';
-	$regex = $ordered ? ';^(?:\d+\.\s);S' : ';^(?:[*-]\s);S';
+	$regex = $ordered ? '/^(?:\d+\.\s)/S' : '/^(?:[*-]\s)/S';
 	echo "<$tag>\n";
 	$reader->rewindLine();
 	while (false !== ($line = $reader->readLine())) {
@@ -174,50 +174,50 @@ function parseQuote(LineReader $reader) {
 function parseP(LineReader $reader) {
 	$p = false;
 	while ( false !== ($line = $reader->readLine())) {
-		if ($reader->current_block == "" && preg_match(';^<\w;S',$line)) {
+		if ($reader->current_block == "" && preg_match('/^<\w/S',$line)) {
 			// inline HTML
 			if ($p) { echo "</p>"; $p = false; }
 			parseHTML($reader);
 			continue;
 		}
-		if (preg_match(';^#{1,6}\s*\w+;S',$line)) {
+		if (preg_match('/^#{1,6}\s*\w+/S',$line)) {
 			// H1-H6
 			if ($p) { echo "</p>\n"; $p = false; }
 			$lvl = strspn($line,"#");
 			echo "<h$lvl>",parseLine($reader,trim($line,"#\n ")),"</h$lvl>\n";
 			continue;
 		}
-		if (preg_match(';^---+$;S',$line)) {
+		if (preg_match('/^---+$/S',$line)) {
 			// hr
 			if ($p) { echo "</p>\n"; $p = false; }
 			echo "<hr>\n";
 			continue;
 		}
-		if (preg_match(';^>;S',$line)) {
+		if (preg_match('/^>/S',$line)) {
 			// blockquote
 			if ($p) { echo "</p>\n"; $p = false; }
 			parseQuote($reader);
 			continue;
 		}
-		if (preg_match(';^\d+\.;S', $line)) {
+		if (preg_match('/^\d+\./S', $line)) {
 			// ol
 			if ($p) { echo "</p>\n"; $p = false; }
 			parseList($reader,true);
 			continue;
 		}
-		if (preg_match(';^(?:-|\*)\s;S', $line)) {
+		if (preg_match('/^(?:-|\*)\s/S', $line)) {
 			// ul
 			if ($p) { echo "</p>\n"; $p = false; }
 			parseList($reader,false);
 			continue;
 		}
-		if (preg_match(';^[`~]{3};S',$line)) {
+		if (preg_match('/^[`~]{3}/S',$line)) {
 			// fenced pre-code
 			if ($p) { echo "</p>\n"; $p = false; }
 			parseCode($reader,true);
 			continue;
 		}
-		if (preg_match(';^\t;S',$line)) {
+		if (preg_match('/^\t/S',$line)) {
 			// pre,code
 			if ($p) { echo "</p>\n"; $p = false; }
 			parseCode($reader);
@@ -232,7 +232,7 @@ function parseP(LineReader $reader) {
 			echo "<p>"; $p = true;
 		}
 		echo parseLine($reader,$line);
-		if (preg_match(';  $;S',$line)) echo "<br>";
+		if (preg_match('/  $/S',$line)) echo "<br>";
 	}
 	if ($p) echo "</p>\n";
 }
