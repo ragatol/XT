@@ -9,7 +9,7 @@ It's able to understand headings, paragraphs, quotes, ordered and unordered list
 
 Since it's designed to be a single-pass, line-by-line, top-down parser, there's some differences on how it implements some complex structures:
 
-- List itens with multiple lines must be identated within the list item first line, eg;
+- List itens with multiple lines must be indented with the item first line, eg;
 	~~~
 	-	Item
 	-	Multiple
