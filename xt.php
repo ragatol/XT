@@ -88,8 +88,8 @@ function parseLine($reader,$line) {
 	// automatic link
 	$line = preg_replace('/(?<!(?:ref|src)=["\'])<?((?:https?|ftp):\/\/[\w-.!*\'\;:@&=+$,\/?#]+)>?/S',"<a href=\"$1\">$1</a>",$line);
 	// special characters
-	// < -> &lt; if not an <a>, <b>, <i> or <span> tag
-	$line = preg_replace('/<(?!\/?a|b|i|span)/S','&lt;',$line);
+	// convert < to &lt; if its not one of supported inline tags
+	$line = preg_replace('/<(?!\/?(?:a|b|i|u|s(?:pan|u[bp])?|mark))/S','&lt;',$line);
 	// formatting
 	// inline code
 	$line = preg_replace_callback('/(`{1,2})(.+?)\1/S',
