@@ -121,10 +121,10 @@ function parseHTML(LineReader $reader) {
 
 function parseCode(LineReader $reader, bool $fenced = false) {
 	$lang = "";
-	if ($fenced) {
-		$lang = preg_replace('/.*?[~`]{3,}(\S+)\n/S','$1',$reader->line);
+	if ($fenced && preg_match('/[~`]{3}(\S+)/S',$reader->line,$matches)) {
+		$lang = " class=\"language-{$matches[1]}\"";
 	}
-	echo "<pre><code", (strlen($lang) > 0 ? " class=\"language-$lang\"" : "") , ">\n";
+	echo "<pre><code{$lang}>\n";
 	if (!$fenced) {
 		$reader->push('\t');
 		$reader->rewindLine();

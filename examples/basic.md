@@ -72,9 +72,11 @@ It doesn't matter the ending `#`, they'll be removed in the final HTML, but it m
 > erat sed, scelerisque dignissim nisl. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 > > Nested quote
 >> with nested code
->> 	test {
->> 		code;
->> 	}
+>> ~~~
+>> test {
+>> 	code;
+>> }
+>> ~~~
 >> End of nested quote...
 > Back to previous quote:
 > 
