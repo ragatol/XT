@@ -78,7 +78,7 @@ function parseLine($reader,$line) {
 	$line = preg_replace_callback('/\[(.+?)\]\(([^"\'\s\)]+)(?:\s*("|\')([^\3\)]*?)\3)?\)/S',
 		function ($matches) use (&$reader) {
 			$title = isset($matches[4]) ? "title=\"{$matches[4]}\"" : "";
-			if (preg_match('/^(?:(?:http(?:s)?|ftp):\/\/)|\/\S|\?\S|mailto:/S',$matches[2])) {
+			if (preg_match('/^\/|\?|http|ftp|mailto/S',$matches[2])) {
 				$link = $matches[2];
 			} else {
 				$link = \dirname($reader->baseurl). '/' . $matches[2];
