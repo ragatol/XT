@@ -97,12 +97,12 @@ function parseLine($reader,$line) {
 			return '<code>'.replaceSpecial($matches[2]).'</code>';	
 		},$line);
 	// strong
-	$line = preg_replace_callback('/(\*\*|__)([\w_\*<].+?)\1(?=[^\w\*_])/S',
+	$line = preg_replace_callback('/(\*\*|__)(\S.*?)\1(?=[^\w\*_])/S',
 		function ($matches) {
-			return '<strong>'.replaceSpecial(preg_replace('/((?<=\W|^)[\*_])(.+?)(?:(?<=\w|>)\1)/S','<em>$2</em>',$matches[2])).'</strong>';
+			return '<strong>'.replaceSpecial(preg_replace('/((?<=\W|^)[\*_])(.+?)(?:(?<=|S)\1)/S','<em>$2</em>',$matches[2])).'</strong>';
 		},$line);
 	// em
-	$line = preg_replace('/((?<=\W|^)[\*_])(.+?)(?:(?<=\w|>)\1)/S','<em>$2</em>',$line);
+	$line = preg_replace('/((?<=\W|^)[\*_])(.+?)(?:(?<=\S)\1)/S','<em>$2</em>',$line);
 	return $line;
 }
 

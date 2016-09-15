@@ -10,6 +10,14 @@ line_
 
 this_is_not_an_emphasis
 
+novo ___for (let item of collection)___ que
+
+emphasis on _a_ single character
+
+strong on __a__ single character
+
+strong on __.js__ filetype
+
 an empty emphasis __ ** is not an emphasis
 
 *mixed **double and* single asterisk** spans
