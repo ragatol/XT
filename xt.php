@@ -70,7 +70,7 @@ function parseLine($reader,$line) {
 			if (preg_match('/^(?:http(?:s)?:\/\/|\/\S|\?\S)/S',$matches[2])) {
 				$link = $matches[2];
 			} else {
-				$link = \dirname($reader->baseurl). '/' . $matches[2];
+				$link = $reader->baseurl . '/' . $matches[2];
 			}
 			return "<img src=\"$link\" alt=\"{$matches[1]}\" $title>";
 		}, $line);
@@ -81,7 +81,7 @@ function parseLine($reader,$line) {
 			if (preg_match('/^\/|\?|http|ftp|mailto/S',$matches[2])) {
 				$link = $matches[2];
 			} else {
-				$link = \dirname($reader->baseurl). '/' . $matches[2];
+				$link = $reader->baseurl . '/' . $matches[2];
 			}
 			return "<a href=\"$link\" $title>{$matches[1]}</a>";
 		}, $line);
